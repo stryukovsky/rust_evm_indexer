@@ -24,10 +24,11 @@ impl Indexer {
     pub fn update_last_block(
         &mut self,
         client: &mut Client,
-        new_last_block: i64,
+        new_last_block: u64,
     ) -> Result<(), ModelError> {
+        let new_last_block_casted = new_last_block as i64;
         let query = format!("UPDATE {} SET last_block = $1 WHERE name = $2", TABLE_NAME);
-        let result = client.execute(query.as_str(), &[&new_last_block, &self.name]);
+        let result = client.execute(query.as_str(), &[&new_last_block_casted, &self.name]);
         match result {
             Ok(_) => {
                 self.last_block = new_last_block as u64;

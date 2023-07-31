@@ -2,6 +2,7 @@ extern crate postgres;
 extern crate serde_json;
 extern crate web3;
 extern crate log;
+extern crate rust_decimal;
 
 use std::env;
 use postgres::{Client, NoTls};

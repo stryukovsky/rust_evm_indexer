@@ -1,1 +1,3 @@
-pub struct CycleError{pub reason: String}
+pub struct CycleError {
+    pub reason: String,
+}
