@@ -2,7 +2,6 @@ use std::fmt::Display;
 
 use web3::types::H256;
 
-
 pub enum TokenType {
     ERC20,
     ERC721,
@@ -28,27 +27,23 @@ impl From<&String> for TokenType {
             TOKEN_TYPE_ERC20 => Self::ERC20,
             TOKEN_TYPE_ERC721 => Self::ERC721,
             TOKEN_TYPE_ERC1155 => Self::ERC1155,
-            _ => panic!("Not implemented TokenType"),
+            _ => panic!("Not implemented TokenType {}", value.as_str()),
         }
     }
 }
 
+pub const ERC20_TRANSFER: &[u8] = b"Transfer(address,address,uint256)";
+pub const ERC721_TRANSFER: &[u8] = b"Transfer(address,address,uint256)";
+pub const ERC1155_TRANSFER_SINGLE: &[u8] = b"TransferSingle(address,address,uint256,uint256)";
+pub const ERC1155_TRANSFER_BATCH: &[u8] = b"TransferBatch(address,address,uint256[],uint256[])";
 impl TokenType {
     pub fn get_events_hashes(&self) -> Vec<H256> {
         match self {
-            Self::ERC20 => vec![H256::from_slice(&web3::signing::keccak256(
-                b"Transfer(address,address,uint256)",
-            ))],
-            Self::ERC721 => vec![H256::from_slice(&web3::signing::keccak256(
-                b"Transfer(address,address,uint256)",
-            ))],
+            Self::ERC20 => vec![H256::from_slice(&web3::signing::keccak256(ERC20_TRANSFER))],
+            Self::ERC721 => vec![H256::from_slice(&web3::signing::keccak256(ERC721_TRANSFER))],
             Self::ERC1155 => vec![
-                H256::from_slice(&web3::signing::keccak256(
-                    b"TransferSingle(address,address,uint256,uint256)",
-                )),
-                H256::from_slice(&web3::signing::keccak256(
-                    b"TransferBatch(address,address,uint256[],uint256[])",
-                )),
+                H256::from_slice(&web3::signing::keccak256(ERC1155_TRANSFER_SINGLE)),
+                H256::from_slice(&web3::signing::keccak256(ERC1155_TRANSFER_BATCH)),
             ],
         }
     }

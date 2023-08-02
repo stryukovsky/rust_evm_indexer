@@ -1,4 +1,4 @@
-use super::{commons::CycleError, transactions::Transaction};
+use super::{commons::IndexerError, transactions::Transaction};
 use crate::{
     indexer::{event_parsers::get_event_parser, strategies::build_strategy},
     models::{Indexer, Network, Token, TokenTransfer, TokenType},
@@ -56,7 +56,7 @@ fn cycle_body(
     client: &mut Client,
     indexer: &mut Indexer,
     runtime: &Runtime,
-) -> Result<(), CycleError> {
+) -> Result<(), IndexerError> {
     let network = get_network(client, indexer)?;
     let transport = get_web3_transport(&network)?;
     let web3 = web3::Web3::new(transport);
@@ -78,8 +78,7 @@ fn cycle_body(
     );
     let three_payload_topics = strategy.get_payload_topics(indexer.strategy_params.clone())?;
     for token in tokens.iter() {
-        let token_type = TokenType::from(&token.token_type);
-        let events = token_type.get_events_hashes();
+        let events = token.token_type.get_events_hashes();
         info!(
             "Token {} has {} event type to handle",
             token.name.as_str(),
@@ -115,31 +114,31 @@ fn cycle_body(
     Ok(())
 }
 
-fn get_network(client: &mut Client, indexer: &mut Indexer) -> Result<Network, CycleError> {
+fn get_network(client: &mut Client, indexer: &mut Indexer) -> Result<Network, IndexerError> {
     match Network::load_from_db(client, indexer.network_id) {
         Ok(network) => {
             info!("Network initialized {}", network.name.as_str());
             Ok(network)
         }
-        Err(e) => Err(CycleError {
+        Err(e) => Err(IndexerError {
             reason: format!("When fetching network occurred: {}", e.reason),
         }),
     }
 }
 
-fn get_web3_transport(network: &Network) -> Result<Http, CycleError> {
+fn get_web3_transport(network: &Network) -> Result<Http, IndexerError> {
     match web3::transports::Http::new(network.rpc_url.as_str()) {
         Ok(transport) => Ok(transport),
-        Err(e) => Err(CycleError {
+        Err(e) => Err(IndexerError {
             reason: e.to_string(),
         }),
     }
 }
 
-fn get_block_number(web3: &Web3<Http>, runtime: &Runtime) -> Result<u64, CycleError> {
+fn get_block_number(web3: &Web3<Http>, runtime: &Runtime) -> Result<u64, IndexerError> {
     match runtime.block_on(web3.eth().block_number()) {
         Ok(number) => Ok(number.as_u64()),
-        Err(e) => Err(CycleError {
+        Err(e) => Err(IndexerError {
             reason: e.to_string(),
         }),
     }
@@ -158,7 +157,7 @@ fn get_filter(
     token: &Token,
     block_range: (u64, u64),
     topics: &[Option<Vec<H256>>; 4],
-) -> Result<BaseFilter<Http, Log>, CycleError> {
+) -> Result<BaseFilter<Http, Log>, IndexerError> {
     let filter_config = FilterBuilder::default()
         .address(vec![Address::from_str(token.address.as_str()).unwrap()])
         .from_block(web3::types::BlockNumber::Number(U64::from(block_range.0)))
@@ -172,25 +171,25 @@ fn get_filter(
         .build();
     match runtime.block_on(web3.eth_filter().create_logs_filter(filter_config)) {
         Ok(base_filter) => Ok(base_filter),
-        Err(e) => Err(CycleError {
+        Err(e) => Err(IndexerError {
             reason: format!("During establishing new filter {e} occurred"),
         }),
     }
 }
 
-fn get_tokens(client: &mut Client, indexer: &Indexer) -> Result<Vec<Token>, CycleError> {
+fn get_tokens(client: &mut Client, indexer: &Indexer) -> Result<Vec<Token>, IndexerError> {
     match Token::load_tokens_from_db_by_indexer(client, indexer) {
         Ok(tokens) => Ok(tokens),
-        Err(e) => Err(CycleError {
+        Err(e) => Err(IndexerError {
             reason: format!("During fetching tokens {} occurred", e.reason),
         }),
     }
 }
 
-fn get_logs(runtime: &Runtime, filter: BaseFilter<Http, Log>) -> Result<Vec<Log>, CycleError> {
+fn get_logs(runtime: &Runtime, filter: BaseFilter<Http, Log>) -> Result<Vec<Log>, IndexerError> {
     match runtime.block_on(filter.logs()) {
         Ok(logs) => Ok(logs),
-        Err(e) => Err(CycleError {
+        Err(e) => Err(IndexerError {
             reason: format!("Error occurred on logs fetching {e}"),
         }),
     }
@@ -201,10 +200,10 @@ fn save_token_transfers(
     indexer: &Indexer,
     token: &Token,
     transactions: Vec<Transaction>,
-) -> Result<(), CycleError> {
+) -> Result<(), IndexerError> {
     match TokenTransfer::save_many(client, transactions, token, indexer) {
         Ok(()) => Ok(()),
-        Err(e) => Err(CycleError {
+        Err(e) => Err(IndexerError {
             reason: format!("Error occurred on token transfer saving: {}", e.reason),
         }),
     }
@@ -214,10 +213,10 @@ fn update_last_block(
     client: &mut Client,
     indexer: &mut Indexer,
     last_block: u64,
-) -> Result<(), CycleError> {
+) -> Result<(), IndexerError> {
     match indexer.update_last_block(client, last_block) {
         Ok(()) => Ok(()),
-        Err(e) => Err(CycleError {
+        Err(e) => Err(IndexerError {
             reason: format!(
                 "During updating last block of indexer {} to {} occurred error {}",
                 indexer.name.as_str(),

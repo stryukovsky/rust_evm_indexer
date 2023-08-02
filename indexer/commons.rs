@@ -1,3 +1,3 @@
-pub struct CycleError {
+pub struct IndexerError {
     pub reason: String,
 }

@@ -12,3 +12,4 @@ pub use token::Token;
 pub use token_type::TokenType;
 pub use indexer_strategy::IndexerStrategy;
 pub use token_transfer::TokenTransfer;
+pub use token_type::{ERC20_TRANSFER, ERC721_TRANSFER, ERC1155_TRANSFER_SINGLE, ERC1155_TRANSFER_BATCH};

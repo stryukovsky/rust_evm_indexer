@@ -1,11 +1,12 @@
 use std::fmt::Display;
 
 use rust_decimal::Decimal;
+use web3::types::U256;
 
 pub enum TransferredToken {
-    Fungible{address: String, amount: Decimal},
-    NFT{address: String, token_id: Decimal},
-    ERC1155{address: String, token_id: Decimal, amount: Decimal},
+    Fungible{address: String, amount: U256},
+    NFT{address: String, token_id: U256},
+    ERC1155{address: String, token_ids: Vec<U256>, amounts: Vec<U256>},
 }
 
 pub struct Transaction {
@@ -25,8 +26,8 @@ impl Display for Transaction {
             TransferredToken::NFT { address, token_id } => {
                 write!(f, "NFT {address} with id {token_id}")
             },
-            TransferredToken::ERC1155 { address, token_id, amount } => {
-                write!(f, "ERC1155 token {address} with id {token_id} amount {amount}")
+            TransferredToken::ERC1155 { address, token_ids, amounts } => {
+                write!(f, "ERC1155 token {address} with id(s) {token_ids:?} amount(s) {amounts:?}")
             }
         }
     }

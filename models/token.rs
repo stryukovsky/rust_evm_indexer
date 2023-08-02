@@ -1,6 +1,6 @@
 use postgres::{Client, Row};
 
-use super::{ModelError, Indexer};
+use super::{ModelError, Indexer, TokenType};
 
 const TABLE_NAME: &'static str = "indexer_api_token";
 const INDEXER_TOKEN_TABLE_NAME: &'static str = "indexer_api_indexer_watched_tokens";
@@ -12,7 +12,7 @@ pub struct Token {
     pub address: String,
     pub name: String,
     pub strategy: String,
-    pub token_type: String,
+    pub token_type: TokenType,
     pub total_supply: Decimal,
     pub volume: Decimal,
     pub network_id: i64,
@@ -67,7 +67,7 @@ impl Token {
             address: row.get(1),
             name: row.get(2),
             strategy: row.get(3),
-            token_type: row.get(4),
+            token_type: TokenType::from(&row.get::<usize, String>(4)),
             total_supply: row.get(5),
             volume: row.get(6),
             network_id: row.get(7),
